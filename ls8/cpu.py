@@ -7,36 +7,44 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.reg = [0b00000000] * 8
+        # 1 in binary for halt
+        self.hlt = 0b00000001
+        # pointer counter
+        self.pc = 0
+        # Instruction Register
+        self.ram = []
+        self.ir = 0b00000000
+        self.mar = 0b00000000
+        self.mdr = 0b00000000
+        self.flags = 0b00000000
+        self.ldi = 0b10000010
+        self.prn = 0b01000111
+        self.mult = 0b10100010
+    def load(self, file_name):
 
-    def load(self):
-        """Load a program into memory."""
+        with open(file_name,'r') as fh:
+            all_lines = fh.readlines()
+        code = []
+        for line in all_lines:
+            processed_line = line.split(' ')[0]
+            if processed_line != '#' and processed_line != '\n':
+                code.append(int(processed_line, 2))
+        self.ram = code
+    def ram_read(self, MAR):
+        MDR = self.ram[MAR]
+        return MDR
 
-        address = 0
-
-        # For now, we've just hardcoded a program:
-
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
-
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
-
-
+    def ram_write(self, MDR, MAR):
+        self.ram[MAR] = MDR
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+        elif op == "MULT":
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -62,4 +70,29 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        print('start cpu')
+        while True:
+            opcode = self.ram[self.pc]
+            self.ir = opcode
+            if opcode == self.hlt:
+                break
+            elif opcode == self.ldi:
+                register = self.ram[self.pc + 1]
+                value = self.ram[self.pc + 2]
+                self.reg[register] = value
+                self.pc += 2
+            elif opcode == self.prn:
+                register = self.ram[self.pc +1]
+                print(self.reg[register])
+                self.pc += 1
+            elif opcode == self.mult:
+                registerA = self.ram[self.pc + 1]
+                registerB = self.ram[self.pc + 2]
+                self.alu("MULT", registerA, registerB)
+                self.pc += 2
+            else:
+                print(f'{opcode} is an invalid opcode')
+                break
+            self.pc += 1
+
+
