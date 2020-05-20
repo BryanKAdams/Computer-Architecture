@@ -64,6 +64,8 @@ but you'll have to implement those three above instructions first!
 * Note what has been implemented, and what hasn't.
 * Read this whole file.
 * Skim the spec.
+LS8 files are binary code that gets passed into the LS8 program.
+LS8.py is the program.
 
 ## Step 1: Add the constructor to `cpu.py`
 
