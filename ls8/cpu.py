@@ -14,13 +14,11 @@ class CPU:
         self.pc = 0
         # Instruction Register
         self.ram = []
-        self.ir = 0b00000000
-        self.mar = 0b00000000
-        self.mdr = 0b00000000
-        self.flags = 0b00000000
-        self.ldi = 0b10000010
-        self.prn = 0b01000111
-        self.mult = 0b10100010
+        self.branch_table = {
+            0b10000010: self.ldi,
+            0b01000111: self.prn,
+            0b10100010: self.mult
+        }
     def load(self, file_name):
 
         with open(file_name,'r') as fh:
@@ -67,7 +65,20 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
         print()
-
+    def ldi(self):
+        register = self.ram[self.pc + 1]
+        value = self.ram[self.pc + 2]
+        self.reg[register] = value
+        self.pc += 2
+    def prn(self):
+        register = self.ram[self.pc + 1]
+        print(self.reg[register])
+        self.pc += 1
+    def mult(self):
+        registerA = self.ram[self.pc + 1]
+        registerB = self.ram[self.pc + 2]
+        self.alu("MULT", registerA, registerB)
+        self.pc += 2
     def run(self):
         """Run the CPU."""
         print('start cpu')
@@ -76,20 +87,8 @@ class CPU:
             self.ir = opcode
             if opcode == self.hlt:
                 break
-            elif opcode == self.ldi:
-                register = self.ram[self.pc + 1]
-                value = self.ram[self.pc + 2]
-                self.reg[register] = value
-                self.pc += 2
-            elif opcode == self.prn:
-                register = self.ram[self.pc +1]
-                print(self.reg[register])
-                self.pc += 1
-            elif opcode == self.mult:
-                registerA = self.ram[self.pc + 1]
-                registerB = self.ram[self.pc + 2]
-                self.alu("MULT", registerA, registerB)
-                self.pc += 2
+            elif opcode in self.branch_table:
+                self.branch_table[opcode]()
             else:
                 print(f'{opcode} is an invalid opcode')
                 break
